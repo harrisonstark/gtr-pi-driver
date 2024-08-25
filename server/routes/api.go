@@ -1,52 +1,47 @@
 package routes
 
 import (
-	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
-	"os"
-	"time"
-
-	"context"
-
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func PushCarEvent(w http.ResponseWriter, r *http.Request) {
-	// Connect to the MongoDB client
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
+	// Extract buttonId from query parameters
+	buttonId := r.URL.Query().Get("buttonId")
+
+	if buttonId == "" {
+		http.Error(w, "Missing buttonId", http.StatusBadRequest)
+		return
+	}
+
+	// Prepare the POST request to localhost:7171/event
+	targetURL := fmt.Sprintf("http://localhost:7171/push_event?event=%s", buttonId)
+
+	req, err := http.NewRequest("POST", targetURL, nil)
 	if err != nil {
-		http.Error(w, "Error connecting to the database", http.StatusInternalServerError)
-		return
-	}
-	defer client.Disconnect(context.Background())
-
-	// Get the collection
-	db := client.Database("gtr-pi")
-	collection := db.Collection("gtr-pi-events")
-
-	// Extract the query parameter
-	event := r.URL.Query().Get("buttonId")
-	if event == "" {
-		http.Error(w, "Missing 'buttonId' query parameter", http.StatusBadRequest)
+		http.Error(w, "Failed to create request", http.StatusInternalServerError)
 		return
 	}
 
-	// Create a document with the event and current timestamp
-	doc := map[string]interface{}{
-		"event":     event,
-		"timestamp": time.Now(),
-	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Insert the document into the collection
-	_, err = collection.InsertOne(context.Background(), doc)
+	// Send the POST request
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		http.Error(w, "Error inserting document into the database", http.StatusInternalServerError)
+		http.Error(w, "Failed to send request", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Copy the response from the target server back to the original client
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "Failed to read response", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with success message
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	w.WriteHeader(resp.StatusCode)
+	w.Write(body)
 }

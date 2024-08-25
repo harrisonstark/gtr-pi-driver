@@ -26,4 +26,4 @@ COPY --from=builder /app/main .
 EXPOSE 7070
 
 # Command to run the executable
-CMD ["go run main.go"]
+CMD ["go", "run", "main.go"]
