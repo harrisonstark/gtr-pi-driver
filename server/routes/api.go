@@ -15,7 +15,6 @@ func PushCarEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Prepare the POST request to localhost:7171/event
 	targetURL := fmt.Sprintf("http://localhost:7171/push_event?event=%s", buttonId)
 
 	req, err := http.NewRequest("POST", targetURL, nil)
