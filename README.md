@@ -3,7 +3,6 @@ Gator Raspberry Pi Car Client
 
 ## Starting the app
 As the app currently stands, from the /server directory, run 'go run main.go'
-Ensure you have a .env file in the /server directory with both MONGODB_URI and PORT (optional) set
 
 I have an untested Dockerfile and Makefile to run all in one command, not ready yet though
 
