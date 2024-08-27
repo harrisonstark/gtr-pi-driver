@@ -4,8 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"gtr/routes"
-
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 )
@@ -13,9 +11,6 @@ import (
 func main() {
 	// Initialize router
 	r := mux.NewRouter()
-
-	// API routes
-	r.HandleFunc("/push-car-event", routes.PushCarEvent).Methods("POST")
 
 	// Serve static files
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("../client"))))
